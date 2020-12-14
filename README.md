@@ -22,3 +22,7 @@ ImportData.r, contains code used in importing data from local (avialable in repo
 LandscapeMetrics.r, contains code used in calculating landscape metrics around sampling points and building land use graphs (fig2, figS1), and overview graphs (fig1).
 
 BuildingSDMModels.r, contains code used in building SDM models and graphs as well as evaluating models.
+
+##Output files:
+
+FinalProject.pdf, contains the computed output from FinalProject.rmd

@@ -1,0 +1,1019 @@
+---
+output: html_document
+  
+---
+#Final project
+
+*[RMarkdown version](FinalProject.rmd)*
+  
+  
+  
+  ```{r,warning=F}
+library(dismo)
+library(maptools)
+data(wrld_simpl)
+
+
+```
+
+
+#Set filepaths and import Basemap
+
+```{r,warning=F}
+library(maptools)
+library(rgdal)
+library(dismo)
+library(ggplot2)
+library(GISTools)
+library(ggpubr) #For arranging ggplots
+library(plyr)
+library(dplyr)
+# Set the path for outputs
+output_path<-("output")
+# if this folder doesn't exist, create it
+if(!dir.exists(output_path)){
+  dir.create(output_path)
+}
+
+
+# Create the folders (directories) "data" and "Final project" - If they exist already, this 
+# command won't over-write them.
+data_path<-(file.path("data","FinalProject"))
+if(!dir.exists(data_path)){
+  dir.create(data_path,recursive = TRUE)
+}
+
+#Download shapefile outline of Ghana
+if(! file.exists(file.path(data_path,'countries.zip'))){
+ download.file("http://www.naturalearthdata.com/http//www.naturalearthdata.com/download/10m/cultural/ne_10m_admin_0_countries.zip", dest=file.path(data_path,"countries.zip"), mode="wb") 
+}
+#unzip (file.path(data_path,"countries.zip"), exdir = data_path)
+# Read in the shapefile with rgdal package
+world <- readOGR(file.path(data_path,"ne_10m_admin_0_countries.shp"))
+GhanaOutline<-(world[world$ADMIN=="Ghana",1]) #1=overall country outline
+
+
+
+
+GhanaMeterGrid<-CRS("+proj=tmerc +lat_0=4.666666666666667 +lon_0=-1 +k=0.99975 +x_0=274319.51 +y_0=0 +ellps=clrk80 +towgs84=-130,29,364,0,0,0,0 +units=m +no_defs") #GhanaMeter Grid EPSG:25000
+GhanaOutline
+
+
+
+
+```
+
+#Import Point Data
+
+```{r, echo=FALSE}
+#Data available at https://github.com/JPReceveur/SpatialEcologyFinalProj
+MUSurvey<-read.csv("GhanaMUSurvey.csv",header=T)
+MUGeo <- subset(MUSurvey, !is.na(lon) & !is.na(lat)) #Remove NAs
+
+
+#plot(GhanaOutline)
+# restore the box around the map
+#box()
+# add the points
+#points(MUGeo$lon, MUGeo$lat, col='orange', pch=20, cex=0.75)
+# plot points again to add a border, for better visibility
+#points(MUGeo$lon, MUGeo$lat, col='red', cex=0.75)
+#WSGeo
+
+wgs1984.proj <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+MUGeo.proj <- SpatialPoints(coords=MUGeo[,c("lon","lat")], proj4string=wgs1984.proj)
+
+plot(GhanaOutline)
+points(MUGeo.proj,col="blue")
+
+
+MUGeo.Meter<-spTransform(MUGeo.proj, GhanaMeterGrid) #project to Ghana meter grid
+Presence<-subset(MUGeo,Total.MU.Present..VNTR.==1)#Total MU Presence coded as 0 for absence and 1 for presence
+#Presence$Total.MU.Present..VNTR.
+Absence<-subset(MUGeo,Total.MU.Present..VNTR.==0)
+names(MUGeo)
+PresenceMPM<-subset(MUGeo,Total.ER.Present==1)#Total MPM Presence coded as 0 for absence and 1 for presence
+#Presence$Total.MU.Present..VNTR.
+AbsenceMPM<-subset(MUGeo,Total.ER.Present==0)
+
+
+#Project the subsets into WGS84 and Ghana Meter Grid
+
+wgs1984.proj <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+Presence.proj <- SpatialPoints(coords=Presence[,c("lon","lat")], proj4string=wgs1984.proj)
+Absence.proj <- SpatialPoints(coords=Absence[,c("lon","lat")], proj4string=wgs1984.proj)
+PresenceMPM.proj <- SpatialPoints(coords=PresenceMPM[,c("lon","lat")], proj4string=wgs1984.proj)
+AbsenceMPM.proj <- SpatialPoints(coords=AbsenceMPM[,c("lon","lat")], proj4string=wgs1984.proj)
+
+
+Presence.Meter<-spTransform(Presence.proj, GhanaMeterGrid)
+Absence.Meter<-spTransform(Absence.proj, GhanaMeterGrid)
+
+PresenceMPM.Meter<-spTransform(PresenceMPM.proj, GhanaMeterGrid)
+AbsenceMPM.Meter<-spTransform(AbsenceMPM.proj, GhanaMeterGrid)
+
+
+#MUGeo.Meter
+GhanaOutline.Meter<-spTransform(GhanaOutline,GhanaMeterGrid)
+
+# par(mfrow=c(1,2), mai=c(0.1,0.1,0.5,0.1))
+# plot(GhanaOutline,main="WGS84")
+# box()
+# points(MUGeo.proj,col="blue")
+# 
+# 
+# 
+# plot(GhanaOutline.Meter,main="GhanaMeterGrid")
+# box()
+# points(MUGeo.Meter,col="blue")
+
+```
+
+
+#Import land cover data (Ghana 2013)
+```{r}
+
+#Download land cover data from https://www.sciencebase.gov/catalog/item/5deffc05e4b02caea0f4f3fc
+
+if(! file.exists(file.path(data_path,'LULC.zip'))){
+ download.file("http://edcintl.cr.usgs.gov/downloads/sciweb1/shared/wafrica/downloads/data/west_africa_land-use_land-cover_2013_2km.zip", dest=file.path(data_path,"LULC.zip"), mode="wb") 
+}
+#unzip (file.path(data_path,"LULC.zip"), exdir = data_path)
+
+LandCover2k <- stack(file.path(data_path,"west_africa_land-use_land-cover_2013_2km/swa_2013lulc_2km.tif"))
+#plot(LandCover2k)
+LandCover2k.Meter<-projectRaster(LandCover2k,crs=GhanaMeterGrid)
+#summary(GhanaOutline.Meter)
+par(mfrow=c(1,1))
+r<- raster(GhanaOutline.Meter)
+res(r)<-2000   #Not really sure what number to put here (units of outline shapefile are m, so just picked the resoultion for the LandCover2k.Meter file)
+r[] <- rnorm(ncell(r))
+#plot(r)
+#plot(GhanaOutline.Meter,add=T)
+r[] <- 0
+
+GhanaRaster<-rasterize(GhanaOutline.Meter,r,getCover=T)
+GhanaRaster[GhanaRaster>0]<-1
+GhanaRaster[GhanaRaster==0]<-NA
+#plot(GhanaRaster)
+#summary(LandCover2k)
+
+#res(LandCover2k.Meter)
+LULCRaster<-LandCover2k.Meter*GhanaRaster #Subset land use by the Ghana outline (all other raster points =0)
+
+plot(LULCRaster)
+points(MUGeo.Meter,col="blue")
+
+
+```
+
+#Land use graph MU (Figure 2a)
+
+```{r}
+#pal_nlcd Function modified from https://space-lab-msu.github.io/MSUGradSpatialEcology/lab3_patch_design.html
+#Table of values avialable at https://github.com/JPReceveur/SpatialEcologyFinalProj
+
+pal_nlcd <- function() {
+  data.frame(
+    class = c("forest", "forest",
+              "forest", "shrubland",
+              "anthropogenic", "anthropogenic",
+              "wetland","anthropogenic",
+              "forest", "No Data",
+              "Sand", "shrubland",
+              "herbaceous", "herbaceous",
+              "No Data", "anthropogenic",
+              "shrubland", "forest",
+              "anthropogenic", "anthropogenic",
+              "No Data","shrubland",
+              "shrubland","herbaceous",
+              "Oasis","shrubland",
+              "shrubland","water",
+              "forest","anthropogenic",
+              "No Data"),
+    code = as.character(c(7, 15,
+             28, 2, 8, 78,
+             3,
+             24, 1, 99,
+             10,12, 31,
+             4, 0, 27, 32,
+             25, 13,
+             6, 98,11,29,23,5,16,22,9,21,14,255)),
+    description = c("Mangrove", "Gallery/ Riparian Forest",
+                    "Swamp Forest", "Savanna", 
+                    "Agriculture", "Open Mine",
+                    "Wetland","Agriculture/ flood recessional",
+                    "Forest", "Cloud",
+                    "Sandy","Bare soil", 
+                    "Herbaceous savanna", "Steppe",
+                    "No data","Cropland/ oil palms", 
+                    "Shrubland",  "Woodland", 
+                    "Settlements","Plantation",
+                    "Cloud shadow", "Rocky land",
+                    "Sahelian short grass savanna", "Thicket",
+                    "Oasis","Shrub and savanna",
+                    "Bowe", "Water bodies",
+                    "Degraded forest","Irrigated agriculture",
+                    "No Data"),
+    color = c("#33cccc", "#aa5ce8",
+              "#beffa6", "#8cb08c", 
+              "#ffff96", "#505050",
+              "#000081","#ebc961", 
+              "#8400a8", "#ffffff",
+              "#ff99cc", "#a87000",
+              "#0a9696", "#ffd09b",
+              "#ffffff", "#77AD93",
+              "#749373", "#28734b",
+              "#ff0000", "#808000",
+              "#ffffff", "#969696",
+              "#a7c38d", "#f8a37b",
+              "#99C147", "#77AD93",
+              "#DCD939", "#3366ff",
+              "#d296e6", "#cdff66",
+              "##ffffff"
+              ),
+    stringsAsFactors = FALSE)
+}
+
+
+NLCD <- as.matrix(table(raster::values(LULCRaster)))
+cols <- dplyr::filter(pal_nlcd(), code %in% row.names(NLCD))
+par(xpd = FALSE,mai = c(0.5, 0.5, 0.2, 0)) 
+
+plot(LULCRaster, legend=FALSE,axes=TRUE,box=FALSE,col=cols$color,
+     xlab="", ylab="") 
+par(xpd = TRUE) # reset to limit plotting to figure region
+plot(GhanaOutline.Meter,add=T)
+legend(x = -2000, y = 690000, legend = cols$description, fill = cols$color, 
+       ncol = 2,  cex = 0.85, inset = 0.9) 
+legend(x=500183,y=615115,legend =c("MU +","MU -"),pch=c(17,16),col=c('red','blue'))
+scalebar(100000,xy = c(439429.8,61762), type="bar", divs = 2, label = c(0,50,100),below="km")
+north.arrow(x=500183, y=345827, len = 10000, cex.lab = 0.75, col = "black", fg = "red")
+plot(Presence.Meter,col="red",bg="red",add=T,pch=24)
+plot(Absence.Meter,col="blue",bg="blue",add=T,pch=21)
+
+# 
+# dev.off()
+# tiff("output/LUGhana.tiff", width = 174, height = 174, units = 'mm', res = 600)
+# par(xpd = FALSE,mai = c(0.5, 0.5, 0.2, 0))
+# 
+# plot(LULCRaster, legend=FALSE,axes=TRUE,box=FALSE,col=cols$color,
+#      xlab="", ylab="")
+# par(xpd = TRUE) # reset to limit plotting to figure region
+# plot(GhanaOutline.Meter,add=T)
+# legend(x = -2000, y = 690000, legend = cols$description, fill = cols$color,
+#        ncol = 2,  cex = 0.85, inset = 0.9)
+# legend(x=450183,y=645115,legend =c("MU +","MU -"),pch=c(17,16),col=c('red','blue'))
+# scalebar(100000,xy = c(439429.8,61762), type="bar", divs = 2, label = c(0,50,100),below="km")
+# north.arrow(x=500183, y=345827, len = 10000, cex.lab = 0.75, col = "black", fg = "red")
+# plot(Presence.Meter,col="red",bg="red",add=T,pch=24)
+# plot(Absence.Meter,col="blue",bg="blue",add=T,pch=21)
+# 
+# dev.off()
+
+```
+
+
+#MPM Land Cover graph (Figure S1)
+
+```{r}
+
+#Plotted as above but showing MPM pres/abs
+par(xpd = FALSE,mai = c(0.5, 0.5, 0.2, 0))
+
+plot(LULCRaster, legend=FALSE,axes=TRUE,box=FALSE,col=cols$color,
+     xlab="", ylab="")
+par(xpd = TRUE) # reset to limit plotting to figure region
+plot(GhanaOutline.Meter,add=T)
+legend(x = -2000, y = 690000, legend = cols$description, fill = cols$color,
+       ncol = 2,  cex = 0.85, inset = 0.9)
+legend(x=450183,y=645115,legend =c("MPM +","MPM -"),pch=c(17,16),col=c('red4','blue'))
+scalebar(100000,xy = c(439429.8,61762), type="bar", divs = 2, label = c(0,50,100),below="km")
+north.arrow(x=500183, y=345827, len = 10000, cex.lab = 0.75, col = "black", fg = "red")
+plot(PresenceMPM.Meter,col="red4",bg="red4",add=T,pch=24)
+plot(AbsenceMPM.Meter,col="blue",bg="blue",add=T,pch=21)
+
+
+
+# dev.off()
+# tiff("output/LUGhana2.tiff", width = 174, height = 174, units = 'mm', res = 1200)
+# par(xpd = FALSE,mai = c(0.5, 0.5, 0.2, 0))
+# 
+# plot(LULCRaster, legend=FALSE,axes=TRUE,box=FALSE,col=cols$color,
+#      xlab="", ylab="")
+# par(xpd = TRUE) # reset to limit plotting to figure region
+# plot(GhanaOutline.Meter,add=T)
+# legend(x = -2000, y = 690000, legend = cols$description, fill = cols$color,
+#        ncol = 2,  cex = 0.85, inset = 0.9)
+# legend(x=450183,y=645115,legend =c("MPM +","MPM -"),pch=c(17,16),col=c('red4','blue'))
+# scalebar(100000,xy = c(439429.8,61762), type="bar", divs = 2, label = c(0,50,100),below="km")
+# north.arrow(x=500183, y=345827, len = 10000, cex.lab = 0.75, col = "black", fg = "red")
+# plot(PresenceMPM.Meter,col="red4",bg="red4",add=T,pch=24)
+# plot(AbsenceMPM.Meter,col="blue",bg="blue",add=T,pch=21)
+# 
+# dev.off()
+
+
+```
+
+#Landscape Metrics
+
+##Calculate 5k landscape metrics
+
+```{r}
+#Load landscape pachages
+library(landscapemetrics)
+library(landscapetools)
+#Data same as above
+MUSurvey<-read.csv("GhanaMUSurvey.csv",header=T)
+
+MUGeo <- subset(MUSurvey, !is.na(lon) & !is.na(lat))
+
+
+wgs1984.proj <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+MUGeo.proj <- SpatialPoints(coords=MUGeo[,c("lon","lat")], proj4string=wgs1984.proj)
+
+LandCover<-LandCover2k
+MUGeo.proj<-spTransform(MUGeo.proj,crs(LandCover))
+GhanaOutline2<-spTransform(GhanaOutline,crs(LandCover))
+
+
+
+#Sample 5k buffer (5000 m) around each sample point using landscape metrics
+Buffer5k<-sample_lsm(
+  LandCover,
+  MUGeo.proj,
+  plot_id = NULL,
+  shape = "square",
+  size=5000,
+  all_classes = FALSE,
+  return_raster = FALSE,
+  verbose = TRUE,
+  progress = FALSE,level="landscape",type="aggregation metric")
+
+Buffer5k
+#unique(Buffer$metric)
+```
+
+
+##Landscape Metric MU 5k
+
+```{r}
+#For loop testing differences between PresAbs values for the chosen metrics (MetricList)
+MetricList<-c("contag","np","lsi","cohesion")
+
+for(i in 1:length(MetricList)){
+  Subset<-subset(Buffer5k,Buffer5k$metric==MetricList[i])
+  print(unique(Subset$metric))
+  
+  
+  
+  Subset$plot_id<-MUGeo$USITEID
+  Subset$PresAbs<-MUGeo$Total.MU.Present..VNTR.
+  Subset$PresAbs[Subset$PresAbs==1]<-"Present"
+  Subset$PresAbs[Subset$PresAbs==0]<-"Absent"
+  Plot <- ggplot(Subset,aes( x=PresAbs,y=value,col=PresAbs))+ylab(MetricList[i])+xlab("MU VNTR Profiling")+geom_boxplot()+scale_color_manual(values=c("blue","red"))+theme(legend.position="none")
+  print(Plot)
+  print(kruskal.test(data=Subset,value~PresAbs))
+  Trtdata <- ddply(Subset, c("metric","PresAbs"), summarise,
+                 N    = length(value),
+                 mean = mean(value),
+                 sd   = sd(value),
+                 se   = sd / sqrt(N)
+  )
+  print(Trtdata)
+  
+}
+
+#LSI Landscape shape index #standardized measure of total edge LSI=1 =single patch increases from there pg 158 Fragstats
+
+#NP <- number of patches pg 149
+#contagion -sum of proportional abundance of each patch, inverse to edge density pg154
+
+
+```
+
+##Landscape Metric MPM 5k
+
+```{r}
+
+MetricList<-c("contag","np","lsi","cohesion")
+#Same as above but using Total.ER.Present to calculate for MPM abundance
+for(i in 1:length(MetricList)){
+  Subset<-subset(Buffer5k,Buffer5k$metric==MetricList[i])
+  print(unique(Subset$metric))
+  
+  
+  
+  Subset$plot_id<-MUGeo$USITEID
+  Subset$PresAbs<-MUGeo$Total.ER.Present #Total ER presence coded as 1= presence, 0 =absence
+  Subset$PresAbs[Subset$PresAbs==1]<-"Present" 
+  Subset$PresAbs[Subset$PresAbs==0]<-"Absent"
+  Plot <- ggplot(Subset,aes( x=PresAbs,y=value,col=PresAbs))+ylab(MetricList[i])+xlab("MPM VNTR Profiling")+geom_boxplot()+scale_color_manual(values=c("blue","red4"))+theme(legend.position="none")
+  print(Plot)
+  print(kruskal.test(data=Subset,PresAbs~value))
+  
+}
+
+
+
+```
+
+#10k landscape metrics MU
+
+```{r}
+#Data same as above
+MUSurvey<-read.csv("GhanaMUSurvey.csv",header=T)
+
+MUGeo <- subset(MUSurvey, !is.na(lon) & !is.na(lat))
+
+
+#Project to WGS84
+wgs1984.proj <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+MUGeo.proj <- SpatialPoints(coords=MUGeo[,c("lon","lat")], proj4string=wgs1984.proj)
+
+LandCover<-LandCover2k
+MUGeo.proj<-spTransform(MUGeo.proj,crs(LandCover))
+GhanaOutline2<-spTransform(GhanaOutline,crs(LandCover))
+
+
+
+#Calculate 10 k buffer (10000 m) around sample points for landscape metrics
+Buffer10k<-sample_lsm(
+  LandCover,
+  MUGeo.proj,
+  plot_id = NULL,
+  shape = "square",
+  size=10000,
+  all_classes = FALSE,
+  return_raster = FALSE,
+  verbose = TRUE,
+  progress = FALSE,level="landscape",type="aggregation metric")
+
+#Buffer10k
+#unique(Buffer$metric)
+```
+
+
+##Landscape Metric MU 10 k
+
+```{r}
+  
+MetricList<-c("contag","np","lsi","cohesion")
+
+for(i in 1:length(MetricList)){
+  Subset<-subset(Buffer10k,Buffer10k$metric==MetricList[i])
+  print(unique(Subset$metric))
+  
+  
+  
+  Subset$plot_id<-MUGeo$USITEID
+  Subset$PresAbs<-MUGeo$Total.MU.Present..VNTR.
+  Subset$PresAbs[Subset$PresAbs==1]<-"Present"
+  Subset$PresAbs[Subset$PresAbs==0]<-"Absent"
+  Plot <- ggplot(Subset,aes( x=PresAbs,y=value,col=PresAbs))+ylab(MetricList[i])+xlab("MU VNTR Profiling")+geom_boxplot()+scale_color_manual(values=c("blue","red"))+theme(legend.position="none")
+  print(Plot)
+  print(kruskal.test(data=Subset,value~PresAbs))
+  Trtdata <- ddply(Subset, c("metric","PresAbs"), summarise,
+                 N    = length(value),
+                 mean = mean(value),
+                 sd   = sd(value),
+                 se   = sd / sqrt(N)
+  )
+  print(Trtdata)
+  
+}
+
+#LSI Landscape shape index #standardized measure of total edge LSI=1 =single patch increases from there pg 158 Fragstats
+
+#NP <- number of patches pg 149
+#contagion -sum of proportional abundance of each patch, inverse to edge density pg154
+
+#Subset for Contag only plot
+Contag<-subset(Buffer10k,Buffer10k$metric=="contag")
+Contag$plot_id<-MUGeo$USITEID
+Contag$PresAbs<-MUGeo$Total.MU.Present..VNTR.
+Contag$PresAbs[Contag$PresAbs==1]<-"Present"
+Contag$PresAbs[Contag$PresAbs==0]<-"Absent"
+
+Plot <- ggplot(Contag,aes( x=PresAbs,y=value,col=PresAbs,shape=PresAbs))+ylab(MetricList[i])+xlab("MU VNTR Profiling")+geom_boxplot()+scale_color_manual(values=c("blue","red"))+theme(legend.position="none")+ylab("Contagion Index")+geom_point()
+Plot
+  
+
+# 
+# dev.off()
+# tiff("output/ContagPlot.tiff", width = 84, height = 84, units = 'mm', res = 600)
+# Plot
+# dev.off()
+
+
+
+  
+```
+
+#Landscape Metric MPM Presence Absence
+##5 kilometer
+
+```{r}
+#List of metrics to run kruskal.wallis tests on
+MetricList<-c("contag","np","lsi","cohesion")
+
+for(i in 1:length(MetricList)){
+  Subset<-subset(Buffer5k,Buffer5k$metric==MetricList[i])
+  print(unique(Subset$metric))
+  
+  
+  
+  Subset$plot_id<-MUGeo$USITEID #unique site ID from file
+  Subset$PresAbs<-MUGeo$Total.ER.Present
+  Subset$PresAbs[Subset$PresAbs==1]<-"Present"
+  Subset$PresAbs[Subset$PresAbs==0]<-"Absent"
+  Plot <- ggplot(Subset,aes( x=PresAbs,y=value,col=PresAbs))+ylab(MetricList[i])+xlab("MPM  Profiling")+geom_boxplot()+scale_color_manual(values=c("blue","red4"))+theme(legend.position="none")
+  #print(Plot)
+  print(kruskal.test(data=Subset,value~PresAbs))
+  Trtdata <- ddply(Subset, c("metric","PresAbs"), summarise,
+                 N    = length(value),
+                 mean = mean(value),
+                 sd   = sd(value),
+                 se   = sd / sqrt(N)
+  )
+  print(Trtdata)
+  
+}
+
+
+
+```
+
+##10k MPM landscape metrics
+
+```{r}
+
+MetricList<-c("contag","np","lsi","cohesion")
+
+for(i in 1:length(MetricList)){
+  Subset<-subset(Buffer10k,Buffer5k$metric==MetricList[i])
+  print(unique(Subset$metric))
+  
+  
+  
+  Subset$plot_id<-MUGeo$USITEID
+  Subset$PresAbs<-MUGeo$Total.ER.Present
+  Subset$PresAbs[Subset$PresAbs==1]<-"Present"
+  Subset$PresAbs[Subset$PresAbs==0]<-"Absent"
+  Plot <- ggplot(Subset,aes( x=PresAbs,y=value,col=PresAbs))+ylab(MetricList[i])+xlab("MPM  Profiling")+geom_boxplot()+scale_color_manual(values=c("blue","red4"))+theme(legend.position="none")
+  #print(Plot)
+  print(kruskal.test(data=Subset,value~PresAbs))
+  Trtdata <- ddply(Subset, c("metric","PresAbs"), summarise,
+                 N    = length(value),
+                 mean = mean(value),
+                 sd   = sd(value),
+                 se   = sd / sqrt(N)
+  )
+  print(Trtdata)
+  
+}
+
+
+
+```
+
+
+
+
+
+#Overview Plots (Figure 1a-d)
+Figures 1a-b
+
+```{r}
+
+Overview<-MUGeo
+
+#Total.MU.Present..VNTR. coded as 1 =pres,0=abs
+Overview$PresAbsMU[Overview$Total.MU.Present..VNTR.==1]<-"MU +"
+Overview$PresAbsMU[Overview$Total.MU.Present..VNTR.==0]<-"MU -"
+
+Overview$PresAbsMPM[Overview$Total.ER.Present==1]<-"MPM +"
+Overview$PresAbsMPM[Overview$Total.ER.Present==0]<-"MPM -"
+theme_set(theme_bw(base_size = 12)+theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()))
+
+#Count of MU by region
+MUCount<-ggplot(Overview,aes( x=PresAbsMU,fill=PresAbsMU))+geom_histogram(stat="count")+facet_grid(~REGION)+scale_fill_manual(values=c('blue','red'))+ylab("Count By Region")+xlab("Presence of MU at site")+theme(legend.position = "none")+ theme(axis.text.x = element_text(angle = 45, hjust = 1))+stat_count(aes(y=..count.., label=..count..), geom="text", vjust=-.5) 
+
+#Count of MPM by region
+MPMCount<-ggplot(Overview,aes( x=PresAbsMPM,fill=PresAbsMPM))+geom_histogram(stat="count")+facet_grid(~REGION)+scale_fill_manual(values=c('blue','red4'))+ylab("Count By Region")+xlab("Presence of MPM at site")+theme(legend.position = "none")+ theme(axis.text.x = element_text(angle = 45, hjust = 1))+stat_count(aes(y=..count.., label=..count..), geom="text", vjust=-.5) 
+
+ggarrange(MUCount,MPMCount,
+          labels = c("a", "b"), ncol = 1,nrow=2)
+
+
+# dev.off()
+# tiff("output/MU.MPMCountByRegion.tiff", width = 174, height = 174, units = 'mm', res = 1200)
+# ggarrange(MUCount,MPMCount,
+#           labels = c("a", "b"), ncol = 1,nrow=2)
+# dev.off()
+
+```
+
+Figures 1c-d
+
+```{r}
+#Extract Land cover from locations where there is a sample point
+Patch<-extract_lsm(LandCover, y = MUGeo.proj, what = "lsm_p_area")
+
+unique(Patch$class)
+#Transform values to LU classes, list available at https://github.com/JPReceveur/SpatialEcologyFinalProj
+Patch$class[Patch$class ==8]<-"Agriculture"
+Patch$class[Patch$class ==2]<-"Savanna"
+Patch$class[Patch$class ==3]<-"Wetland"
+Patch$class[Patch$class ==13]<-"Settlements"
+Patch$class[Patch$class ==21]<-"Degraded forest"
+Patch$class[Patch$class ==1]<-"Forest"
+Patch$class[Patch$class ==78]<-"Open Mine"
+Patch$class[Patch$class ==15]<-"Gallery/Riparian forest"
+
+Patch$extract_id<-MUGeo$ï..USITEID
+Patch$MUPresAbs<-as.character(MUGeo$Total.MU.Present..VNTR.)
+Patch$MUPresAbs[Patch$MUPresAbs==0]<-"MU -"
+Patch$MUPresAbs[Patch$MUPresAbs==1]<-"MU +"
+
+Patch$MPMPresAbs<-as.character(MUGeo$Total.ER.Present)
+Patch$MPMPresAbs[Patch$MPMPresAbs==0]<-"MPM -"
+Patch$MPMPresAbs[Patch$MPMPresAbs==1]<-"MPM +"
+
+#MU presence by Land use
+MUByLocation<-ggplot(Patch,aes( x= MUPresAbs,fill=MUPresAbs))+geom_histogram(stat="count")+facet_grid(~class)+scale_fill_manual(values=c('blue','red'))+ylab("Count By Land Use")+xlab("Presence of MU at site")+theme(legend.position = "none")+ theme(axis.text.x = element_text(angle = 45, hjust = 1))+stat_count(aes(y=..count.., label=..count..), geom="text", vjust=-.5) 
+
+
+#MPM pres/abs by land use
+MPMByLocation<-ggplot(Patch,aes( x= MPMPresAbs,fill=MPMPresAbs))+geom_histogram(stat="count")+facet_grid(~class)+scale_fill_manual(values=c('blue','red4'))+ylab("Count By Land Use")+xlab("Presence of MPM at site")+theme(legend.position = "none")+ theme(axis.text.x = element_text(angle = 45, hjust = 1))+stat_count(aes(y=..count.., label=..count..), geom="text", vjust=-.5) 
+
+
+
+ggarrange(MUByLocation,MPMByLocation,
+          labels = c("a", "b"), ncol = 1,nrow=2)
+
+# 
+# dev.off()
+# tiff("output/PresenceByLU.tiff", width = 174, height = 174, units = 'mm', res = 600)
+# ggarrange(MUByLocation,MPMByLocation,
+#           labels = c("c", "d"), ncol = 1,nrow=2)
+# 
+# 
+# 
+# dev.off()
+
+
+
+```
+
+
+
+
+
+
+
+#Import Climate Data
+
+```{r}
+#Climate Data downloaded 
+#if(! file.exists(file.path(data_path,'ClimateData.zip'))){
+# download.file("https://biogeo.ucdavis.edu/data/worldclim/v2.1/base/wc2.1_30s_bio.zip", dest=file.path(data_path,"ClimateData.zip"), mode="wb") 
+#}
+#unzip (file.path(data_path,"ClimateData.zip"), exdir = data_path)
+#Folder Climate Data subset contains
+#wc2.1_30s_bio_1.tif Annual Mean Temperature
+#wc2.1_30s_bio_12.tif Annual Precipitation
+#wc2.1_30s_bio_15.tif Precipitation seasonality
+#wc2.1_30s_bio_7.tif Temperature Annual range
+#wc2.1_30s_bio_14.tif Precipitation of driest month
+
+ClimateTif<-list.files(file.path(data_path,"ClimateDataSubset"), pattern='tif$', full.names=TRUE )
+ClimateSubset <- stack(ClimateTif)
+
+
+ma.area <- extent(GhanaOutline)
+
+ClimateSubsetGhana <- crop(ClimateSubset, ma.area)
+GhanaClimateSubset.Meter<-projectRaster(ClimateSubsetGhana,crs=GhanaMeterGrid)
+
+
+```
+
+
+
+
+
+
+
+#SDM Models
+
+```{r}
+#Import survey data and seperate into pres absence data
+MUSurvey<-read.csv("GhanaMUSurvey.csv",header=T)
+MUGeo <- subset(MUSurvey, !is.na(lon) & !is.na(lat))
+Presence<-subset(MUGeo,Total.MU.Present..VNTR.==1)
+Presence$Total.MU.Present..VNTR.
+Absence<-subset(MUGeo,Total.MU.Present..VNTR.==0)
+
+wgs1984.proj <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+Presence.proj <- SpatialPoints(coords=Presence[,c("lon","lat")], proj4string=wgs1984.proj)
+Absence.proj <- SpatialPoints(coords=Absence[,c("lon","lat")], proj4string=wgs1984.proj)
+
+
+Presence.Meter<-spTransform(Presence.proj, GhanaMeterGrid)
+Absence.Meter<-spTransform(Absence.proj, GhanaMeterGrid)
+
+
+#MUGeo.Meter
+
+
+presvals <- extract(GhanaClimateSubset.Meter, Presence.Meter)
+absvals <- extract(GhanaClimateSubset.Meter, Absence.Meter)
+pb <- c(rep(1, nrow(presvals)), rep(0, nrow(absvals)))
+sdmdata <- data.frame(cbind(pb, rbind(presvals, absvals)))
+#head(sdmdata)
+
+#pairs(sdmdata[,2:5], cex=0.1)
+
+
+
+PresLat<-Presence.Meter$lat
+PresLong<-Presence.Meter$lon
+
+PresLongLat<-data.frame(PresLong,PresLat)
+
+
+pred_nf<-GhanaClimateSubset.Meter
+
+#See dismo vignette 
+set.seed(0)
+group <- kfold(PresLongLat, 5)
+pres_train <- PresLongLat[group != 1, ]
+pres_test <- PresLongLat[group == 1, ]
+
+ext<-extent(GhanaOutline.Meter)
+
+AbsLat<-Absence.Meter$lat
+AbsLong<-Absence.Meter$lon
+
+AbsLongLat<-data.frame(AbsLong,AbsLat)
+
+
+pred_nf<-GhanaClimateSubset.Meter
+
+
+set.seed(0)
+group <- kfold(AbsLongLat, 5)
+#group
+abs_train <- AbsLongLat[group != 1, ]
+
+abs_test <- AbsLongLat[group == 1, ]
+
+
+r <- raster(pred_nf, 1)
+# plot(!is.na(r), col=c('white', 'light grey'), legend=FALSE)
+# plot(ext, add=TRUE, col='red', lwd=2)
+# points(abs_train, pch='-', cex=0.5, col='black')
+# points(abs_test, pch='-',  cex=0.5, col='black')
+# points(pres_train, pch= '+', col='green')
+# points(pres_test, pch='+', col='blue')
+```
+
+
+##Bioclim model MU pres/abs
+
+```{r}
+bc<-bioclim(pred_nf,pres_train) #pres_train
+
+#plot(bc, a=1,b=2,p=0.85)
+```
+
+```{r}
+e<-evaluate(pres_test,abs_test,bc,pred_nf)
+e
+
+tr<-threshold(e,'spec_sens')
+#tr
+
+pb<-predict(pred_nf,bc,ext=ext,progress='')
+pb
+
+par(mfrow=c(1,2))
+plot(pb, main='Bioclim, raw values')
+plot(GhanaOutline.Meter, add=TRUE, border='dark grey')
+plot(pb > tr, main='presence/absence')
+plot(GhanaOutline.Meter, add=TRUE, border='dark grey')
+points(pres_train, pch='+')
+
+```
+
+##Domain Model
+```{r}
+dm <- domain(pred_nf, pres_train)
+e <- evaluate(pres_test, abs_test, dm, pred_nf)
+e
+
+pd = predict(pred_nf, dm, ext=ext, progress='')
+par(mfrow=c(1,2))
+plot(pd, main='Domain, raw values')
+plot(GhanaOutline.Meter, add=TRUE, border='dark grey')
+tr <- threshold(e, 'spec_sens')
+plot(pd > tr, main='presence/absence')
+plot(GhanaOutline.Meter, add=TRUE, border='dark grey')
+points(pres_train, pch='+')
+
+```
+
+
+
+
+
+```{r}
+predictors<-GhanaClimateSubset.Meter
+colnames(pres_train)<-colnames(abs_train)
+train <- rbind(pres_train, abs_train)
+
+
+pb_train <- c(rep(1, nrow(pres_train)), rep(0, nrow(abs_train)))
+envtrain <- extract(predictors, train)
+envtrain <- data.frame( cbind(pa=pb_train, envtrain) )
+#head(envtrain)
+
+testpres <- data.frame( extract(predictors, pres_test) )
+testabs <- data.frame( extract(predictors, abs_test) )
+```
+
+##GLM Model MU pres/abs
+
+```{r}
+# logistic regression:
+#names(envtrain)
+gm1 <- glm(pa ~ wc2.1_30s_bio_1+wc2.1_30s_bio_12+wc2.1_30s_bio_15+wc2.1_30s_bio_7+wc2.1_30s_bio_14, family = binomial(link = "logit"), data=envtrain)
+
+summary(gm1)
+#coef(gm1)
+gm2 <- glm(pa ~ wc2.1_30s_bio_1+wc2.1_30s_bio_12+wc2.1_30s_bio_15+wc2.1_30s_bio_7+wc2.1_30s_bio_14,
+           family = gaussian(link = "identity"), data=envtrain)
+evaluate(testpres,testabs,gm1)
+
+ge2 <- evaluate(testpres, testabs, gm1)
+ge2
+
+pg <- predict(predictors, gm1, ext=ext)
+
+#plot(pg, main='GLM/binomial, raw values')
+#plot(GhanaOutline.Meter, add=TRUE, border='dark grey')
+tr <- threshold(ge2, 'spec_sens')
+
+plot(pg > tr, main='presence/absence MU (GLM)')
+plot(GhanaOutline.Meter, add=TRUE, border='dark grey')
+
+legend(x=500183,y=615115,legend =c("MU +","MU -"),pch=c(17,16),col=c('red','blue'))
+scalebar(100000,xy = c(439429.8,61762), type="bar", divs = 2, label = c(0,50,100),below="km")
+north.arrow(x=500183, y=345827, len = 10000, cex.lab = 0.75, col = "black", fg = "red")
+points(pres_test,col="red",bg="red",pch=24)
+points(abs_test,col="blue",bg="blue",pch=21)
+
+# 
+# 
+# dev.off()
+# tiff("output/GLMSDMWTestSet.tiff", width = 174, height = 174, units = 'mm', res = 1200)
+# plot(pg > tr, main='presence/absence MU (GLM)')
+# plot(GhanaOutline.Meter, add=TRUE, border='dark grey')
+# legend(x=500183,y=615115,legend =c("MU +","MU -"),pch=c(17,16),col=c('red','blue'))
+# scalebar(100000,xy = c(439429.8,61762), type="bar", divs = 2, label = c(0,50,100),below="km")
+# north.arrow(x=500183, y=345827, len = 10000, cex.lab = 0.75, col = "black", fg = "red")
+# points(pres_test,col="red",bg="red",pch=24)
+# points(abs_test,col="blue",bg="blue",pch=21)
+# dev.off()
+
+
+
+```
+
+
+##Random Forest SDM Model MU
+
+```{r}
+library(randomForest)
+model <- pa ~ wc2.1_30s_bio_1+wc2.1_30s_bio_12+wc2.1_30s_bio_15+wc2.1_30s_bio_7+wc2.1_30s_bio_14
+rf1 <- randomForest(model, data=envtrain)
+model <- factor(pa) ~ wc2.1_30s_bio_1+wc2.1_30s_bio_12+wc2.1_30s_bio_15+wc2.1_30s_bio_7+wc2.1_30s_bio_14
+rf2 <- randomForest(model, data=envtrain)
+erf <- evaluate(testpres, testabs, rf1)
+erf
+
+pr <- predict(predictors, rf1, ext=ext)
+plot(pr, main='Random Forest, regression')
+plot(GhanaOutline.Meter, add=TRUE, border='dark grey')
+tr <- threshold(erf, 'spec_sens')
+plot(pr > tr, main='presence/absence MU (RF)')
+plot(GhanaOutline.Meter, add=TRUE, border='dark grey')
+legend(x=500183,y=615115,legend =c("MU +","MU -"),pch=c(17,16),col=c('red','blue'))
+scalebar(100000,xy = c(439429.8,61762), type="bar", divs = 2, label = c(0,50,100),below="km")
+north.arrow(x=500183, y=345827, len = 10000, cex.lab = 0.75, col = "black", fg = "red")
+points(pres_test,col="red",bg="red",pch=24)
+points(abs_test,col="blue",bg="blue",pch=21)
+
+importance(rf2)
+
+
+# dev.off()
+# tiff("output/rfSDMWTestSet.tiff", width = 174, height = 174, units = 'mm', res = 1200)
+# plot(pr > tr, main='presence/absence MU (RF)')
+# plot(GhanaOutline.Meter, add=TRUE, border='dark grey')
+# legend(x=500183,y=615115,legend =c("MU +","MU -"),pch=c(17,16),col=c('red','blue'))
+# scalebar(100000,xy = c(439429.8,61762), type="bar", divs = 2, label = c(0,50,100),below="km")
+# north.arrow(x=500183, y=345827, len = 10000, cex.lab = 0.75, col = "black", fg = "red")
+# points(pres_test,col="red",bg="red",pch=24)
+# points(abs_test,col="blue",bg="blue",pch=21)
+# 
+# dev.off()
+
+```
+
+##Support Vector machines
+
+```{r}
+
+library(kernlab)
+svm <- ksvm(pa ~ wc2.1_30s_bio_1+wc2.1_30s_bio_12+wc2.1_30s_bio_15+wc2.1_30s_bio_7+wc2.1_30s_bio_14, data=envtrain)
+
+esv <- evaluate(testpres, testabs, svm)
+esv
+
+ps <- predict(predictors, svm, ext=ext)
+par(mfrow=c(1,2))
+plot(ps, main='Support Vector Machine')
+plot(GhanaOutline.Meter, add=TRUE, border='dark grey')
+tr <- threshold(esv, 'spec_sens')
+plot(ps > tr, main='presence/absence')
+plot(GhanaOutline.Meter, add=TRUE, border='dark grey')
+points(pres_train, pch='+')
+points(abs_train, pch='-', cex=0.25)
+
+```
+
+##Combining model predictions (Final two models (rf,glm) shown seperately and not combined)
+```{r}
+# Final 
+# models <- stack(pg, pr )
+# names(models) <- c("glm", "rf")
+# plot(models)
+# 
+# m <- mean(models)
+# plot(m, main='average score')
+# 
+# auc <- sapply(list(ge2, erf), function(x) x@auc)
+# w <- (auc-0.5)^2
+# m2 <- weighted.mean( models[[c("glm", "rf")]], w)
+# plot(m2)
+# plot(GhanaOutline.Meter,add=T)
+# plot(Presence.Meter,col="red",bg="red",add=T,pch=24)
+# plot(Absence.Meter,col="blue",bg="blue",add=T,pch=21)
+```
+
+
+
+
+
+#Correlograms MU/MPM presence absence by distance (Figure 2b)
+
+```{r}
+library(ncf)
+#Not used Moran I assumption data is normal
+# 
+# qqnorm(MUGeo$Total.ER.Present)
+# qqline(MUGeo$Total.ER.Present,col="blue")
+# 
+# 
+
+cor.MUPos <- correlog(MUGeo.proj$lat, MUGeo.proj$lon, MUGeo$Total.MU.Present..VNTR., increment = 10000, resamp = 100)
+plot(cor.MUPos,xlab= "Distance (m, mean of class)",ylab="Correlation (MU positivity)",main="")
+abline(h = 0, col = "purple")
+
+# 
+# dev.off()
+# tiff("output/CorrelogramMUPresence.tiff", width = 84, height = 84, units = 'mm', res = 1200)
+# plot(cor.MUPos,xlab= "Distance (m, mean of class)",ylab="Correlation (MU positivity)",main="")
+# abline(h = 0, col = "purple")
+# 
+# dev.off()
+
+
+cor.MPMPos <- correlog(MUGeo.proj$lat, MUGeo.proj$lon, MUGeo$Total.ER.Present, increment = 10000, resamp = 100)
+
+plot(cor.MPMPos,xlab= "Distance (m, mean of class)",ylab="Correlation (MPM positivity)",main="")
+abline(h = 0, col = "purple")
+# 
+# dev.off()
+# tiff("output/CorrelogramMPMPresence.tiff", width = 84, height = 84, units = 'mm', res = 1200)
+# plot(cor.MPMPos,xlab= "Distance (m, mean of class)",ylab="Correlation (MPM positivity)",main="")
+# abline(h = 0, col = "purple")
+# 
+# dev.off()
+
+```
+
+

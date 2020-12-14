@@ -11,7 +11,7 @@ PointsOnly.csv, contains lon,lat values from GhanaMUSurvey.csv with no other met
 
 GhanaMUSurveyColDescriptions.csv, This file contains descriptions of all column labels used in GhanaMUSurvey.csv
 
-WorkflowDiagram.png, Contains a visual representation of the workflow used for analysis in this paper.
+WorkflowDiagram.png, Contains a visual representation of the workflow used for analysis in this paper.Workflow uses files: ImportData.r, LandscapeMetrics.r, and BuildingSDMModels.r
 
 NumericLandUseClassDescriptions.xlsx, Cover classes coorosponding to numeric classes used in West Africa land cover used in this study (https://www.sciencebase.gov/catalog/item/5deffc05e4b02caea0f4f3fc)
 

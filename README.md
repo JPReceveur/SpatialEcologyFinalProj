@@ -3,7 +3,7 @@ This repository contains code for the spatial ecology final project (Fall 2020):
 
 ##Data files:
 
-GhanaMUSurvey.csv, This file contains the raw data collected during the field survey:Benbow et. al. (2014)
+GhanaMUSurvey.csv, This file contains  raw data collected during the field survey:Benbow et. al. (2014), additional data not used in the present analysis can be found at https://datadryad.org/stash/dataset/doi:10.5061/dryad.br47r
 
 PointsOnly.csv, contains lon,lat values from GhanaMUSurvey.csv with no other metadata.
 

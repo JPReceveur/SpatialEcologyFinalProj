@@ -45,7 +45,9 @@ body:
   - type: textarea
     id: Description
     attributes:
-      label: Description If the issue is related to a manifest, please provide the manifest ID here
+      label: Issue
+      Description: If the issue is related to a manifest, please provide the manifest ID here
+      placeholder: Please provide a summary of your issue here
     validations:
       required: true
 

@@ -1,7 +1,7 @@
 name: NeMO help request
 description: File a bug report
-title: "[Bug]: "
-labels: ["bug", "triage"]
+title: "[Issue]: "
+labels: ["Issue"]
 assignees:
   - JPReceveur
 body:

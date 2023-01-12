@@ -47,6 +47,6 @@ body:
     attributes:
       label: Description
       description: Please provide a description of your question. For how to fix some of our common issues, see here (here). If the issue is related to a manifest, please provide the manifest ID here
-      validations:
-        required: true
+    validations:
+      required: true
 

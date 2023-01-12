@@ -8,7 +8,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
+        Thanks for reaching out to the NeMO team. We are happy to help with any issues and you can find a list of frequently asked questions here (link)
   - type: input
     id: contact
     attributes:
@@ -45,8 +45,7 @@ body:
   - type: textarea
     id: Description
     attributes:
-      label: Description
-      description: Please provide a description of your question. For how to fix some of our common issues, see here (here). If the issue is related to a manifest, please provide the manifest ID here
+      label: Description If the issue is related to a manifest, please provide the manifest ID here
     validations:
       required: true
 

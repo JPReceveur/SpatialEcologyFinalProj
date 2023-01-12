@@ -17,15 +17,7 @@ body:
       placeholder: ex. email@example.com
     validations:
       required: false
-  - type: textarea
-    id: what-happened
-    attributes:
-      label: What happened?
-      description: Also tell us, what did you expect to happen?
-      placeholder: Tell us what you see!
-      value: "A bug happened!"
-    validations:
-      required: true
+
   - type: dropdown
     id: Project
     attributes:
@@ -39,9 +31,9 @@ body:
     validations:
       required: true
   - type: dropdown
-    id: IssueType
+    id: Issue Type
     attributes:
-      label: What best fits your issue
+      label: What category best fits your issue:
       multiple: true
       options:
         - Manifest Validation
@@ -55,5 +47,6 @@ body:
     attributes:
       label: Description
       description: Please provide a description of your question. For how to fix some of our common issues, see here (here). If the issue is related to a manifest, please provide the manifest ID here
-      render: shell
+      validations:
+        required: true
 

@@ -33,7 +33,7 @@ body:
   - type: dropdown
     id: Issue Type
     attributes:
-      label: What category best fits your issue:
+      label: What category best fits your issue?
       multiple: true
       options:
         - Manifest Validation

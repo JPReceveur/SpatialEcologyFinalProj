@@ -1,7 +1,7 @@
 name: NeMO help request
-description: File a bug report
-title: "[Issue]: "
-labels: ["Issue"]
+description: Request help from the NeMO Team or file a bug report
+title: "[NeMO User Issue]: "
+labels: ["UserIssue"]
 assignees:
   - JPReceveur
 body:
@@ -13,7 +13,7 @@ body:
     id: contact
     attributes:
       label: Contact Details
-      description: How can we get in touch with you if we need more info?
+      description: How can we best get in touch with you if we need more info?
       placeholder: ex. email@example.com
     validations:
       required: false
@@ -46,7 +46,7 @@ body:
     id: Description
     attributes:
       label: Issue
-      description: If the issue is related to a manifest, please provide the manifest ID here
+      description: If the issue is related to a manifest, please provide the manifest ID here. DO NOT INCLUDE ANY CONTROLLED ACCESS INFORMATION HERE, these issues are publically viewable. If you need to talk to our team privately, please email nemo@som.umaryland.edu
       placeholder: Please provide a summary of your issue here
     validations:
       required: true

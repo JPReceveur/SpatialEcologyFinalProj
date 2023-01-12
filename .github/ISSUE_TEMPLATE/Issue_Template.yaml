@@ -31,7 +31,7 @@ body:
     validations:
       required: true
   - type: dropdown
-    id: Issue Type
+    id: Issue_Type
     attributes:
       label: What category best fits your issue?
       multiple: true

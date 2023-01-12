@@ -1,4 +1,4 @@
-name: Bug Report
+name: NeMO help request
 description: File a bug report
 title: "[Bug]: "
 labels: ["bug", "triage"]
@@ -27,36 +27,33 @@ body:
     validations:
       required: true
   - type: dropdown
-    id: version
+    id: Project
     attributes:
       label: Version
-      description: What version of our software are you running?
+      description: What project are you associated with?
       options:
-        - 1.0.2 (Default)
-        - 1.0.3 (Edge)
+        - BICAN
+        - BICCN
+        - SCORCH
+        - Other
     validations:
       required: true
   - type: dropdown
-    id: browsers
+    id: IssueType
     attributes:
-      label: What browsers are you seeing the problem on?
+      label: What best fits your issue
       multiple: true
       options:
-        - Firefox
-        - Chrome
-        - Safari
-        - Microsoft Edge
+        - Manifest Validation
+        - Controlled vocabulary terms
+        - File upload
+        - Accessing public files
+        - Accessing restricted files
+        
   - type: textarea
-    id: logs
+    id: Description
     attributes:
-      label: Relevant log output
-      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      label: Description
+      description: Please provide a description of your question. For how to fix some of our common issues, see here (here). If the issue is related to a manifest, please provide the manifest ID here
       render: shell
-  - type: checkboxes
-    id: terms
-    attributes:
-      label: Code of Conduct
-      description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com)
-      options:
-        - label: I agree to follow this project's Code of Conduct
-          required: true
+

@@ -21,7 +21,7 @@ body:
   - type: dropdown
     id: Project
     attributes:
-      label: Version
+      label: Project
       description: What project are you associated with?
       options:
         - BICAN

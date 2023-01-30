@@ -46,7 +46,7 @@ body:
     id: Description
     attributes:
       label: Issue
-      description: If the issue is related to a manifest, please provide the manifest ID here. DO NOT INCLUDE ANY CONTROLLED ACCESS INFORMATION HERE, these issues are publically viewable. If you need to talk to our team privately, please email nemo@som.umaryland.edu
+      description: If the issue is related to a manifest, please provide the manifest ID here. If you need to talk to our team privately, please email nemo@som.umaryland.edu
       placeholder: Please provide a summary of your issue here
     validations:
       required: true
@@ -55,7 +55,7 @@ body:
     id: terms
     attributes:
       label: This ticket contains only public information
-      description: 
+      description: DO NOT INCLUDE ANY CONTROLLED ACCESS INFORMATION, these issues are publically viewable.
       options:
         - label: There is no personally identifiable or restricted information included in this ticket
     validations:

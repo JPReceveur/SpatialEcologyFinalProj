@@ -50,4 +50,10 @@ body:
       placeholder: Please provide a summary of your issue here
     validations:
       required: true
+  - type: checkbox
+    id: Privacy
+    attributes:
+      label: No controlled or restricted information is inculded in this message
+    validations:
+      required: true
 

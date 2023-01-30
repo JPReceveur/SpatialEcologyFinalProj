@@ -50,10 +50,12 @@ body:
       placeholder: Please provide a summary of your issue here
     validations:
       required: true
-  - type: checkboxes
-    id: Privacy
+- type: checkboxes
+    id: terms
     attributes:
-      label: No controlled or restricted information is inculded in this message
-    validations:
-      required: true
+      label: Code of Conduct
+      description: There is no controlled or restricted information included in this form. These forms are public so please remove any sensitive information before posting
+      options:
+        - label: This submission contains no controlled or personally identifiable information
+          required: true
 

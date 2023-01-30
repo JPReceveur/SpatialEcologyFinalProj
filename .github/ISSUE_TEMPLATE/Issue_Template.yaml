@@ -57,6 +57,6 @@ body:
       label: This ticket contains only public information
       description: DO NOT INCLUDE ANY CONTROLLED ACCESS INFORMATION, these issues are publically viewable.
       options:
-        label: There is no personally identifiable or restricted information included in this ticket
+        - There is no personally identifiable or restricted information included in this ticket
     validations:
       required: true

@@ -59,12 +59,3 @@ body:
       options:
         - label: There is no personally identifiable or restricted information included in this ticket
           required: true
-
-  - type: checkboxes
-    id: terms
-    attributes:
-      label: Code of Conduct
-      description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com)
-      options:
-        - label: I agree to follow this project's Code of Conduct
-          required: true

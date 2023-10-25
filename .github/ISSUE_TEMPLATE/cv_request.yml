@@ -1,4 +1,4 @@
-name: Request
+name: Controlled Vocab Request
 description: Request help from the NeMO Team or file a bug report2
 title: "[NeMO User Issue]: "
 labels: ["USER_ISSUE"]

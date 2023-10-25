@@ -1,5 +1,5 @@
 name: CV Term Request
-description: Request a new controlled vocabulary for manifest submission
+description: Request a new controlled vocabulary term for manifest submission
 title: "[CV term request]: "
 labels: ["Controlled vocabulary terms"]
 assignees:

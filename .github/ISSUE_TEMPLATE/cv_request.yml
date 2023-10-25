@@ -1,6 +1,6 @@
-name: CV request
-description: Request a new controlled vocabulary term for use in a submission manifest
-title: "[NeMO CV request]: "
+name: NeMO help request
+description: Request help from the NeMO Team or file a bug report
+title: "[NeMO User Issue]: "
 labels: ["USER_ISSUE"]
 assignees:
   - JPReceveur
@@ -8,7 +8,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reaching out to the NeMO team about adding a new cv term. Please provide the information below.
+        Thanks for reaching out to the NeMO team. We are happy to help with any issues you encounter. Please provide the information below.
 
   - type: dropdown
     id: Project

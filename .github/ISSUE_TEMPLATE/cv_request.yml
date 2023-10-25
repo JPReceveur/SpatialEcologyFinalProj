@@ -11,7 +11,7 @@ body:
         Thanks for reaching out to the NeMO team. We are happy to help with any issues you encounter. Please provide the information below.
 
   - type: dropdown
-    id: Project
+    id: project
     attributes:
       label: Project
       description: What project are you associated with?
@@ -31,7 +31,7 @@ body:
       required: true
       
   - type: input
-    id: Proposed CV term
+    id: proposed_term
     attributes:
       label: Please provide the proposed term name
       description: New terms must be in all lowercase, without spaces, commas, semicolons, or special characters
@@ -39,7 +39,7 @@ body:
     validations:
       required: true
   - type: textarea
-    id: Definition of cv term
+    id: term_definition
     attributes:
       label: Please provide a suggested definition for the suggested term
       description: 

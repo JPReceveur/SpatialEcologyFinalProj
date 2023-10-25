@@ -25,7 +25,7 @@ body:
   - type: input
     id: cvfield
     attributes:
-      label: Please provide the manifest field which you would like to request a new term.
+      label: Please provide the manifest field for which you would like to request a new term.
       placeholder: e.g. Technique
     validations:
       required: true

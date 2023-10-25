@@ -1,14 +1,14 @@
-name: Controlled Vocab Request
-description: Request help from the NeMO Team or file a bug report2
-title: "[NeMO User Issue]: "
-labels: ["USER_ISSUE"]
+name: CV Request
+description: Request a new controlled vocabulary for manifest submission
+title: "[CV request]: "
+labels: ["Controlled vocabulary terms"]
 assignees:
   - JPReceveur
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for reaching out to the NeMO team. We are happy to help with any issues you encounter. Please provide the information below.
+        Thanks for reaching out about the addition of a new controlled vocabulary term. Please provide the information below and a member of our team will review the request and respond with any issues. 
 
   - type: dropdown
     id: project
@@ -50,9 +50,9 @@ body:
     id: terms
     attributes:
       label: The information in this ticket contains only public information
-      description: DO NOT INCLUDE ANY CONTROLLED ACCESS OR PERSONAL IDENTIFYING INFORMATION, these issues are publicly viewable. If you need to share anything that is not public, please email nemo@som.umaryland.edu
+      description: DO NOT INCLUDE ANY CONTROLLED ACCESS OR PERSONAL IDENTIFYING INFORMATION here, these issues are publicly viewable. If you need to share anything that is not public, please email nemo@som.umaryland.edu
       options:
-        - label: There is no personally identifiable or restricted information included in this ticket
+        - label: There is no personally identifiable or restricted information included in this ticket 
           required: true
   - type: input
     id: contact

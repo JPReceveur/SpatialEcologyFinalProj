@@ -1,6 +1,6 @@
-name: CV Request
+name: CV Term Request
 description: Request a new controlled vocabulary for manifest submission
-title: "[CV request]: "
+title: "[CV term request]: "
 labels: ["Controlled vocabulary terms"]
 assignees:
   - JPReceveur

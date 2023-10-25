@@ -23,36 +23,49 @@ body:
     validations:
       required: true
   - type: dropdown
-    id: Issue_Type
+    id: Project
     attributes:
-      label: What category best fits your issue?
-      multiple: true
+      label: Project
+      description: What project are you associated with?
       options:
-        - Manifest Validation
-        - Controlled vocabulary terms
-        - File upload
-        - Accessing public files
-        - Accessing restricted files
+        - BICAN
+        - BICCN
+        - SCORCH
         - Other
-        
-  - type: textarea
-    id: Description
-    attributes:
-      label: Issue
-      description: If the issue is related to a manifest, please provide the manifest ID here. If you need to talk to our team privately, please email nemo@som.umaryland.edu
-      placeholder: Please provide a summary of your issue here
     validations:
       required: true
-
+  - type: input
+    id: cvfield
+    attributes:
+      label: Please provide the manifest field which you would like to request a new term.
+      placeholder: e.g. Technique
+    validations:
+      required: true
+      
+  - type: input
+    id: Proposed CV term
+    attributes:
+      label: Please provide the proposed term name
+      description: New terms must be in all lowercase, without spaces, commas, semicolons, or special characters
+      placeholder: term_name
+    validations:
+      required: true
+  - type: textarea
+    id: Definition of cv term
+    attributes:
+      label: Please provide a suggested definition for the suggested term
+      description: 
+      placeholder: Please provide a suggested definition here (max 100 words)
+    validations:
+      required: true
   - type: checkboxes
     id: terms
     attributes:
-      label: This ticket contains only public information
-      description: DO NOT INCLUDE ANY CONTROLLED ACCESS INFORMATION, these issues are publicly viewable. If you need to share anything that is not public, please email nemo@som.umaryland.edu
+      label: The information in this ticket contains only public information
+      description: DO NOT INCLUDE ANY CONTROLLED ACCESS OR PERSONAL IDENTIFYING INFORMATION, these issues are publicly viewable. If you need to share anything that is not public, please email nemo@som.umaryland.edu
       options:
         - label: There is no personally identifiable or restricted information included in this ticket
           required: true
-
   - type: input
     id: contact
     attributes:

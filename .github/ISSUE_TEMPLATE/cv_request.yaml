@@ -41,7 +41,7 @@ body:
   - type: textarea
     id: term_definition
     attributes:
-      label: Please provide a suggested definition for the suggested term
+      label: Please provide a suggested definition for the term
       description: 
       placeholder: Please provide a suggested definition here (max 100 words)
     validations:

@@ -22,18 +22,6 @@ body:
         - Other
     validations:
       required: true
-  - type: dropdown
-    id: Project
-    attributes:
-      label: Project
-      description: What project are you associated with?
-      options:
-        - BICAN
-        - BICCN
-        - SCORCH
-        - Other
-    validations:
-      required: true
   - type: input
     id: cvfield
     attributes:

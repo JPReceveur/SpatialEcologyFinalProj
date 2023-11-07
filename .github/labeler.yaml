@@ -1,9 +1,11 @@
-# Number of labels to fetch (optional). Defaults to 100
-numLabels: 40
-# These labels will not be used even if the issue contains them (optional).
-# Pass a blank array if no labels are to be excluded.
-# excludeLabels: []
-excludeLabels:
-  - pinned
-# custom configuration to override default behaviour
-# control explicitly what gets added and when
+# Add labels based on project
+BICAN:
+    - 'BICAN'
+BICCN:
+    - 'BICCN'
+SCORCH:
+    - 'SCORCH'
+Controlled vocabulary terms
+    - 'Controlled vocabulary terms'
+Manifest Validation
+    - 'Manifest Validation'
